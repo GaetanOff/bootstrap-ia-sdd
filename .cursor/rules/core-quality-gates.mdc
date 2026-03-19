@@ -1,0 +1,106 @@
+---
+description: Conformance gates — spec-driven validation checkpoints at every phase
+alwaysApply: true
+---
+
+# Conformance Gates
+
+## Pre-Implementation Gate (Spec Readiness)
+
+Before writing any code for a feature, verify:
+
+- [ ] Feature spec is written, reviewed, and approved.
+- [ ] Data contracts (JSON Schema / types) are defined and valid.
+- [ ] API contracts (OpenAPI / GraphQL) are defined and lint-free.
+- [ ] Error contracts are defined for all failure modes.
+- [ ] Behavior specs (Given-When-Then) cover happy path and error paths.
+- [ ] Conformance tests are generated from specs.
+- [ ] Architecture decisions are documented as ADRs referencing specs.
+- [ ] Dependencies and blockers are identified.
+
+## Spec Conformance Gate (Per Feature)
+
+After implementing each feature, validate against specs:
+
+### Contract Conformance
+- [ ] API responses match the OpenAPI spec exactly (schema, status codes, headers).
+- [ ] Request validation rejects payloads that don't match the request schema.
+- [ ] Data shapes in the database match the data contracts.
+- [ ] Error responses match the error envelope contract.
+- [ ] UI components accept and emit exactly the contracted props/events.
+- [ ] Integration calls match the consumer-driven contracts (Pact / contract tests).
+
+### Behavior Conformance
+- [ ] All Given-When-Then scenarios pass.
+- [ ] Happy path acceptance criteria are met.
+- [ ] Error path acceptance criteria are met.
+- [ ] Edge cases defined in specs are handled.
+- [ ] Error messages match the spec's error code catalog.
+
+### Code Quality
+- [ ] Types/interfaces are generated from or aligned with spec schemas.
+- [ ] No linter errors or warnings.
+- [ ] No hardcoded values that should come from spec definitions.
+- [ ] No `TODO` or `FIXME` left without a tracking ticket.
+- [ ] Dead code is removed. No commented-out blocks.
+
+### Testing
+- [ ] Conformance tests pass (spec-generated).
+- [ ] Unit tests cover business logic and edge cases beyond specs.
+- [ ] Integration tests verify component interactions match contracts.
+- [ ] Tests are deterministic and isolated.
+- [ ] Code coverage meets project threshold (aim for 80%+ on business logic).
+
+### Security Conformance
+- [ ] Authentication matches the spec's security schemes.
+- [ ] Authorization matches the spec's endpoint-level security requirements.
+- [ ] User input is validated against the request schemas.
+- [ ] No secrets in code or configuration files.
+- [ ] SQL injection, XSS, CSRF protections match security specs.
+
+### Performance Conformance
+- [ ] Response times meet the SLOs defined in specs (p50/p95/p99).
+- [ ] Throughput meets the spec's capacity requirements.
+- [ ] No N+1 queries. Database queries are optimized.
+- [ ] API responses are paginated per the pagination contract.
+- [ ] No memory leaks (cleanup in effects, unsubscribe, close connections).
+
+### Accessibility Conformance (UI)
+- [ ] Semantic HTML matches the UI contract's accessibility requirements.
+- [ ] Interactive elements are keyboard-navigable per spec.
+- [ ] Color contrast meets WCAG AA (4.5:1 minimum).
+- [ ] Screen reader labels are present on all interactive elements.
+- [ ] Focus management is correct for modals and dynamic content.
+
+## Spec Consistency Gate (Cross-Feature)
+
+Before integrating features, validate spec consistency:
+
+- [ ] No conflicting data contracts between features (same entity, different shapes).
+- [ ] Shared contracts (`$ref`) are used consistently across all API specs.
+- [ ] Error codes are unique and don't collide across features.
+- [ ] Authentication and authorization contracts are consistent.
+- [ ] Pagination and filtering contracts follow the shared spec.
+
+## Pre-Release Gate
+
+Before deploying to production:
+
+- [ ] All feature conformance gates pass.
+- [ ] All spec consistency gates pass.
+- [ ] E2E tests pass on critical user flows defined in behavior specs.
+- [ ] Performance benchmarks meet SLOs from specs.
+- [ ] Security audit checklist matches security specs.
+- [ ] API documentation is auto-generated from specs and up to date.
+- [ ] Specs are versioned and tagged with the release.
+- [ ] Rollback plan is documented and tested.
+- [ ] Monitoring and alerting are configured for SLO violations.
+
+## Continuous Conformance
+
+- Run spec linters (OpenAPI, JSON Schema) on every commit.
+- Run conformance tests on every push (CI pipeline).
+- Run contract tests on every PR.
+- Run E2E behavior tests before every deployment.
+- Validate spec-to-code drift weekly (automated spec conformance report).
+- Review dependency vulnerabilities weekly.

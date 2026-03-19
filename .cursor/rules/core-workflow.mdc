@@ -1,0 +1,100 @@
+---
+description: Master workflow for Spec Driven Development — specifications are the single source of truth
+alwaysApply: true
+---
+
+# SDD Workflow (Spec Driven Development)
+
+## Overview
+
+Follow this spec-driven approach for every project. Specifications are the **single source of truth** — they drive architecture, implementation, tests, and documentation. Never skip phases.
+
+```
+Discovery → Specification → Contract Design → Scaffolding → Spec-First Implementation → Conformance Gates → Iteration
+```
+
+## Phase 1: Discovery
+
+Before writing any spec, deeply understand the project:
+
+- Ask clarifying questions about requirements, constraints, and priorities.
+- Identify the target users, core use cases, and expected scale.
+- List functional requirements (features) and non-functional requirements (performance, security, accessibility).
+- Identify constraints: budget, timeline, team size, existing infrastructure, compliance.
+- Define what "done" looks like — explicit acceptance criteria for each feature.
+
+## Phase 2: Specification
+
+Write formal specifications BEFORE any code or architecture decision:
+
+- Write **feature specs** in structured format (Given-When-Then, input/output contracts).
+- Define **data contracts** (JSON Schema, TypeScript interfaces, Pydantic models) for every entity.
+- Define **API contracts** (OpenAPI/Swagger, GraphQL schema, gRPC proto) for every endpoint.
+- Define **UI contracts** (component props, state shapes, event signatures) for every interactive element.
+- Define **integration contracts** (request/response shapes, error codes) for every external dependency.
+- Specs must be **machine-readable** when possible — they will generate tests and validation.
+- Specs must be **reviewed and approved** before any implementation begins.
+
+## Phase 3: Contract Design
+
+Design the system architecture driven by the approved specs:
+
+- Choose architecture pattern based on the contracts defined in Phase 2.
+- Map data contracts to database schema and migrations.
+- Map API contracts to routes, controllers, and middleware.
+- Map UI contracts to component tree and state management.
+- Document architectural decisions as ADRs, referencing the specs that drove them.
+- Select tech stack based on the contracts' requirements (see `core-tech-stack` rule).
+
+## Phase 4: Scaffolding
+
+Generate the project structure aligned with specs:
+
+- Create directory structure following feature-based organization.
+- Generate **contract stubs** from specs (TypeScript types, API route skeletons, DB schema).
+- Set up spec validation tooling (OpenAPI validator, JSON Schema validator, contract test runner).
+- Configure linter, formatter, and pre-commit hooks.
+- Set up testing framework with **spec conformance tests** as the first tests.
+- Create `.env.example` with all required environment variables.
+- Initialize git with a proper `.gitignore`.
+
+## Phase 5: Spec-First Implementation
+
+Build feature by feature, guided by specs:
+
+- Implement one complete vertical slice at a time, **starting from the spec contracts**.
+- Write **conformance tests** from the spec BEFORE writing implementation code.
+- Implementation must satisfy the spec — the spec is the acceptance criteria.
+- Commit after each meaningful, working increment that passes conformance.
+- If implementation reveals a spec gap, **update the spec first**, then implement.
+- Handle errors, edge cases, and validation as defined in the spec contracts.
+
+## Phase 6: Conformance Gates
+
+Validate implementation against specs (see `core-quality-gates` rule):
+
+- All conformance tests pass (spec-generated + manual).
+- API responses match the OpenAPI/contract definition exactly.
+- Data shapes match the defined schemas.
+- UI components accept and emit exactly the contracted props/events.
+- No linter errors or warnings.
+- Security, performance, and accessibility specs are met.
+
+## Phase 7: Iteration
+
+Refine based on feedback — specs evolve, code follows:
+
+- Review against original specs and acceptance criteria.
+- When requirements change, **update the spec first**, then propagate to code.
+- Identify spec gaps revealed during usage or testing.
+- Optimize performance bottlenecks found during conformance testing.
+- Specs are living documents — they evolve with the project.
+
+## Rules
+
+- Never start implementation before specs are written and approved.
+- Specs are the single source of truth — code conforms to specs, not the other way around.
+- When a spec and implementation disagree, the spec wins (update code, or update spec explicitly).
+- Always explain your reasoning when making spec decisions.
+- Present trade-offs explicitly — never make silent assumptions about contracts.
+- When in doubt, ask. A wrong spec is costlier than a wrong implementation.

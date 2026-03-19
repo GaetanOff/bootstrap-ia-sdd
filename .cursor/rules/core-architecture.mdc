@@ -1,0 +1,96 @@
+---
+description: Contract-first architecture — design driven by specifications and contracts
+alwaysApply: true
+---
+
+# Contract-First Architecture
+
+## Decision Framework
+
+For every architectural decision, document as an ADR referencing the specs that drove it:
+
+1. **Context**: What spec requirement or contract constraint drives this decision?
+2. **Options**: What are the viable approaches? (minimum 2)
+3. **Trade-offs**: Pros and cons of each option against the spec requirements.
+4. **Decision**: Which option and why — with spec references.
+5. **Consequences**: What contracts are affected? What new specs are needed?
+
+## Architecture Patterns
+
+Choose based on the contracts defined in the Specification phase:
+
+| Pattern | When to Use | Spec Signal |
+|---------|-------------|-------------|
+| **Monolith** | Small team, single product, few API contracts | <10 endpoints, single data store |
+| **Modular Monolith** | Growing product, clear contract boundaries | Multiple bounded contexts in specs |
+| **Microservices** | Independent contracts, different scaling needs | Separate API specs per domain |
+| **Serverless** | Event-driven contracts, async workflows | AsyncAPI specs, event schemas |
+| **Jamstack** | Content-heavy, static + dynamic hybrid | Few API contracts, CDN-friendly |
+| **Event-Driven** | Async workflows, decoupled contracts | Event schemas, pub/sub contracts |
+
+## Contract-Driven Data Modeling
+
+- Start from the **data contracts** (JSON Schema / TypeScript interfaces) defined in specs.
+- Map each schema to a database table/collection — the spec IS the source of truth.
+- Normalize for writes, denormalize for reads (when performance specs require it).
+- Choose the right database for the workload based on contract shapes:
+  - **Relational** (PostgreSQL, MySQL): structured schemas, complex query contracts, ACID.
+  - **Document** (MongoDB, Firestore): flexible schemas, nested data contracts.
+  - **Key-Value** (Redis, DynamoDB): simple lookup contracts, high-throughput.
+  - **Graph** (Neo4j): relationship-heavy contracts.
+- Plan for data migrations from day one. Schema evolution must maintain contract compatibility.
+
+## Contract-Driven API Design
+
+- API architecture is derived directly from the **OpenAPI / GraphQL / gRPC specs**.
+- Every endpoint in the spec maps to a route, controller, and service.
+- Shared spec components (`$ref`) map to shared middleware and utilities.
+- Error contracts define the error handling middleware.
+- Pagination, filtering, and sorting contracts define query parameter handling.
+- Versioning strategy is defined in the spec (`/api/v1/`).
+
+## State Management (Driven by Contracts)
+
+- Identify what state lives where based on the data contracts:
+  - Server state: entities defined in data schemas.
+  - Client state: UI component contracts and prop types.
+  - URL state: query parameters defined in API specs.
+  - Cache state: derived from response contracts and cache-control specs.
+- Minimize client-side state. Derive what you can from server contracts.
+- Use optimistic updates for responsive UIs with server contract reconciliation.
+
+## Security Architecture (Driven by Security Specs)
+
+- Authentication strategy defined in the API spec's security schemes.
+- Authorization model derived from endpoint-level security requirements in the spec.
+- Trust boundaries mapped from the contract boundaries between services.
+- Secrets management, encryption specs defined as non-functional requirements.
+
+## Scalability (Driven by Performance Specs)
+
+- Performance SLOs from specs drive scaling decisions (p50/p95/p99 latency, throughput).
+- Identify bottlenecks by analyzing contract call patterns and data flow.
+- Use stateless services where contracts allow (easier to scale).
+- Plan caching layers based on response contract cache-control headers.
+- Async processing for contracts with high latency tolerance (queues, background jobs).
+
+## Cross-Cutting Concerns (Defined in Shared Specs)
+
+Plan these upfront as shared spec components:
+- **Error envelope**: standard error response contract used by all endpoints.
+- **Pagination**: shared pagination contract (`page`, `limit`, `total`, `next`).
+- **Logging**: structured log format spec with correlation IDs.
+- **Health checks**: health endpoint contract (`/health`, `/ready`).
+- **Rate limiting**: rate limit headers contract (`X-RateLimit-*`).
+- **Auth headers**: authentication header contract (`Authorization: Bearer <token>`).
+
+## From Specs to Architecture Diagram
+
+```
+specs/api/openapi.yaml     → Routes, Controllers, Middleware
+specs/schemas/*.json       → Database Schema, ORM Models, Validation
+specs/contracts/*.pact     → Integration Layer, External Service Clients
+specs/features/*.feature   → Use Cases, Business Logic Services
+specs/ui/*.props.ts        → Component Tree, State Management
+specs/decisions/*.md       → ADRs, Architecture Documentation
+```

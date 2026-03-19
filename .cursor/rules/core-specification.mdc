@@ -1,0 +1,214 @@
+---
+description: Specification authoring — how to write, structure, and manage specs as the single source of truth
+alwaysApply: true
+---
+
+# Specification Authoring
+
+## Principles
+
+- Specs are **the single source of truth** for the system's behavior and contracts.
+- Specs must be **machine-readable** whenever possible — they generate tests, docs, and stubs.
+- Specs must be **human-readable** — any developer should understand the system from specs alone.
+- Specs are **living documents** — they evolve with the project, never become stale.
+- Specs are **versioned** — changes to specs are tracked, reviewed, and approved like code.
+
+## Spec Directory Structure
+
+```
+specs/
+  api/                    # API contracts
+    openapi.yaml          # REST API specification (OpenAPI 3.x)
+    asyncapi.yaml         # Event-driven API specification
+  schemas/                # Data contracts
+    user.schema.json      # JSON Schema for User entity
+    order.schema.json     # JSON Schema for Order entity
+    shared/               # Shared schema definitions ($ref targets)
+      address.schema.json
+      pagination.schema.json
+      error.schema.json
+  contracts/              # Integration contracts
+    payment-api.pact.json # Consumer-driven contract (Pact)
+    email-service.yaml    # External service contract
+  features/               # Behavior specifications
+    auth.feature          # Gherkin / Given-When-Then
+    checkout.feature
+  ui/                     # UI component contracts
+    button.props.ts       # Component prop types and variants
+    form-field.props.ts
+  decisions/              # Architecture Decision Records
+    001-database-choice.md
+    002-auth-strategy.md
+```
+
+## Data Contracts
+
+Define every entity as a formal schema:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "User",
+  "type": "object",
+  "required": ["id", "email", "name", "role", "createdAt"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "email": { "type": "string", "format": "email" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "role": { "enum": ["admin", "user", "viewer"] },
+    "createdAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}
+```
+
+Rules for data contracts:
+- Every entity has a schema. No untyped data flows through the system.
+- Use `$ref` for shared definitions (address, pagination, error envelope).
+- Define `required` fields explicitly. Default to required, opt-in to optional.
+- Use `additionalProperties: false` to catch unexpected fields.
+- Include format constraints (`email`, `uuid`, `date-time`, `uri`).
+- Define enums for all finite value sets.
+
+## API Contracts
+
+Define every endpoint in OpenAPI format:
+
+```yaml
+paths:
+  /api/v1/users:
+    get:
+      summary: List users
+      operationId: listUsers
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Paginated list of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Create a user
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/Conflict'
+```
+
+Rules for API contracts:
+- Every endpoint has a full OpenAPI definition BEFORE implementation.
+- Define all response codes (success + every error case).
+- Use `$ref` to reference data schemas — don't duplicate.
+- Include request/response examples for each endpoint.
+- Define shared components: error envelope, pagination, auth headers.
+- Version the API in the spec (`/api/v1/`).
+
+## Behavior Specifications
+
+Define feature behavior in Given-When-Then format:
+
+```gherkin
+Feature: User Registration
+
+  Scenario: Successful registration
+    Given no user exists with email "alice@example.com"
+    When POST /api/v1/auth/register with:
+      | email    | alice@example.com |
+      | password | SecureP@ss1       |
+      | name     | Alice             |
+    Then response status is 201
+    And response body matches schema "User"
+    And a verification email is sent to "alice@example.com"
+
+  Scenario: Registration with existing email
+    Given a user exists with email "alice@example.com"
+    When POST /api/v1/auth/register with:
+      | email    | alice@example.com |
+      | password | SecureP@ss1       |
+      | name     | Alice             |
+    Then response status is 409
+    And response body matches schema "ErrorResponse"
+    And error code is "EMAIL_ALREADY_EXISTS"
+```
+
+Rules for behavior specs:
+- Write scenarios for happy path AND every error path.
+- Reference data contracts by name (`matches schema "User"`).
+- Include edge cases: empty input, boundary values, concurrent access.
+- Behavior specs are executable — they drive integration/E2E tests.
+
+## Error Contracts
+
+Define a standard error envelope used across all APIs:
+
+```json
+{
+  "title": "ErrorResponse",
+  "type": "object",
+  "required": ["error"],
+  "properties": {
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string", "description": "Machine-readable error code" },
+        "message": { "type": "string", "description": "Human-readable error message" },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": { "type": "string" },
+              "message": { "type": "string" },
+              "code": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Spec Lifecycle
+
+1. **Draft**: write the initial spec based on requirements.
+2. **Review**: validate with stakeholders and other developers.
+3. **Approved**: spec is locked for implementation. Changes require a spec update PR.
+4. **Implemented**: code conforms to the spec. Conformance tests pass.
+5. **Evolved**: requirements change → spec is updated first → code follows.
+
+## Spec Validation Rules
+
+- Every spec must be syntactically valid (OpenAPI linter, JSON Schema validator).
+- Specs must be internally consistent (no $ref to missing schemas).
+- Specs must be complete (no `TODO` or `TBD` in approved specs).
+- Spec changes must be backward compatible unless a major version bump is planned.
+- Breaking changes must be documented with migration guides.
+
+## Anti-Patterns
+
+- **Spec After Code**: writing specs to match existing code defeats the purpose. Spec first.
+- **Vague Specs**: "returns user data" is not a spec. Define the exact schema.
+- **Orphan Specs**: specs that no code references or tests validate. Every spec must be wired.
+- **Spec Drift**: code that diverges from specs without updating them. Conformance tests prevent this.
+- **Over-Specification**: specifying internal implementation details. Specs define contracts, not internals.

@@ -1,0 +1,182 @@
+---
+description: Spec-driven scaffolding — project structure with specs directory, contract tooling, conformance setup
+alwaysApply: true
+---
+
+# Spec-Driven Scaffolding
+
+## Directory Structure
+
+Generate a feature-based structure with a **specs directory** at the root:
+
+### Web App (React/Next.js/Vue)
+
+```
+specs/                            # Single source of truth
+  api/
+    openapi.yaml                  # REST API specification
+  schemas/
+    user.schema.json              # Data contracts
+    shared/
+      error.schema.json
+      pagination.schema.json
+  features/
+    auth.feature                  # Behavior specifications
+  ui/
+    button.props.ts               # UI component contracts
+  decisions/
+    001-tech-stack.md             # ADRs
+src/
+  app/                            # Routes and pages
+  features/                       # Feature modules
+    auth/
+      components/
+      hooks/
+      services/
+      types.ts                    # Generated from specs/schemas/
+      index.ts
+    dashboard/
+      ...
+  shared/
+    components/                   # Reusable UI components
+    hooks/                        # Shared hooks
+    lib/                          # Utility functions
+    types/                        # Shared types (generated from specs)
+  infrastructure/
+    api/                          # API client (generated from OpenAPI)
+    config/                       # App configuration
+    providers/                    # Context providers
+public/                           # Static assets
+tests/
+  conformance/                    # Spec conformance tests
+  e2e/                            # E2E tests from behavior specs
+```
+
+### Backend API (Node.js/Python/Go)
+
+```
+specs/                            # Single source of truth
+  api/
+    openapi.yaml
+  schemas/
+    user.schema.json
+    order.schema.json
+    shared/
+      error.schema.json
+      pagination.schema.json
+  contracts/
+    payment-api.pact.json         # Integration contracts
+  features/
+    auth.feature
+    checkout.feature
+  decisions/
+    001-database-choice.md
+src/
+  features/                       # Feature modules
+    users/
+      controller.ts
+      service.ts
+      repository.ts
+      schema.ts                   # Derived from specs/schemas/
+      routes.ts                   # Derived from specs/api/
+      __tests__/
+        conformance/              # Spec conformance tests
+        unit/
+    orders/
+      ...
+  shared/
+    middleware/                    # Express/Fastify middleware
+    errors/                       # Error classes matching error contract
+    utils/                        # Utility functions
+    types/                        # Types generated from specs
+  infrastructure/
+    database/                     # DB connection, migrations
+    cache/                        # Cache layer
+    config/                       # Environment config
+    logger/                       # Structured logging
+```
+
+### Fullstack (Monorepo)
+
+```
+specs/                            # Shared specs across apps
+  api/
+  schemas/
+  contracts/
+  features/
+  decisions/
+apps/
+  web/                            # Frontend app
+  api/                            # Backend app
+  mobile/                         # Mobile app (optional)
+packages/
+  shared/                         # Shared types (generated from specs)
+  ui/                             # Shared component library
+  config/                         # Shared configurations
+```
+
+## Tooling Setup Checklist
+
+For every project, set up:
+
+- [ ] **Package manager**: npm/pnpm/yarn (JS), uv/poetry (Python), go mod (Go).
+- [ ] **Linter**: ESLint (JS/TS), Ruff (Python), golangci-lint (Go), clippy (Rust).
+- [ ] **Formatter**: Prettier (JS/TS), Black/Ruff (Python), gofmt (Go), rustfmt (Rust).
+- [ ] **Type checker**: TypeScript strict mode, mypy/pyright (Python).
+- [ ] **Test runner**: Vitest/Jest (JS), pytest (Python), go test (Go), cargo test (Rust).
+- [ ] **Spec linter**: `spectral` (OpenAPI), `ajv` (JSON Schema), `asyncapi-cli` (AsyncAPI).
+- [ ] **Conformance tester**: `dredd`/`prism`/`schemathesis` (API), `pact` (contracts).
+- [ ] **Code generator**: `openapi-generator`/`orval` (types from specs).
+- [ ] **Git hooks**: Husky + lint-staged (JS), pre-commit (Python) — include spec linting.
+- [ ] **Environment**: `.env.example` with all variables documented.
+- [ ] **Editor config**: `.editorconfig` for consistent formatting across editors.
+
+## Configuration Files
+
+Generate appropriate config files for the chosen stack:
+
+### JavaScript/TypeScript
+- `package.json` with scripts: dev, build, test, lint, format, `spec:lint`, `spec:test`, `spec:generate`.
+- `tsconfig.json` with strict mode enabled.
+- `.eslintrc` or `eslint.config.js` with recommended rules.
+- `.prettierrc` with consistent settings.
+- `.spectral.yaml` for OpenAPI linting rules.
+
+### Python
+- `pyproject.toml` with all tool configuration.
+- `requirements.txt` or `uv.lock` for pinned dependencies.
+- `schemathesis` config for API conformance testing.
+
+### Go
+- `go.mod` with module path.
+- `Makefile` with build, test, lint, `spec-lint`, `spec-test` targets.
+
+### Rust
+- `Cargo.toml` with workspace configuration.
+- `clippy.toml` for custom lint rules.
+
+## Initial Files
+
+Create these files at project setup:
+- `README.md` — project purpose, setup instructions, spec overview.
+- `.gitignore` — stack-appropriate ignore patterns.
+- `.env.example` — all environment variables with descriptions.
+- `specs/api/openapi.yaml` — initial API spec skeleton.
+- `specs/schemas/shared/error.schema.json` — standard error envelope contract.
+- `specs/schemas/shared/pagination.schema.json` — standard pagination contract.
+- `specs/decisions/001-tech-stack.md` — first ADR: technology selection.
+- `Dockerfile` — if containerization is needed.
+- `docker-compose.yml` — for local development with services (DB, cache, etc.).
+
+## First Commit Checklist
+
+The first commit should include:
+- [ ] Project structure created with `specs/` directory.
+- [ ] Initial spec skeleton (OpenAPI, shared schemas, error contract).
+- [ ] Spec linting configured and passing.
+- [ ] All configuration files in place.
+- [ ] Dependencies installed and lockfile committed.
+- [ ] Linter and formatter running without errors.
+- [ ] At least one conformance test skeleton passing.
+- [ ] README with setup instructions and spec overview.
+- [ ] CI pipeline configuration (including spec validation step).
