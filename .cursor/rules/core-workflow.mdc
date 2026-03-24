@@ -5,13 +5,96 @@ alwaysApply: true
 
 # SDD Workflow (Spec Driven Development)
 
-## Overview
-
-Follow this spec-driven approach for every project. Specifications are the **single source of truth** — they drive architecture, implementation, tests, and documentation. Never skip phases.
+## Quick Reference
 
 ```
-Discovery → Specification → Contract Design → Scaffolding → Spec-First Implementation → Conformance Gates → Iteration
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         SDD WORKFLOW PHASES                                │
+├─────────────┬───────────────┬──────────────────┬───────────────────────────┤
+│ Phase 0     │ Phase 1       │ Phase 2          │ Phase 3                   │
+│ SPEC AUDIT  │ DISCOVERY     │ SPECIFICATION    │ CONTRACT DESIGN           │
+│ (existing   │ Requirements  │ OpenAPI, JSON    │ Architecture driven       │
+│  projects)  │ & constraints │ Schema, Gherkin  │ by approved specs         │
+├─────────────┼───────────────┼──────────────────┼───────────────────────────┤
+│ Phase 4     │ Phase 5       │ Phase 6          │ Phase 7                   │
+│ SCAFFOLDING │ SPEC-FIRST    │ CONFORMANCE      │ ITERATION                 │
+│ Project     │ IMPLEMENTATION│ GATES            │ Specs evolve first,       │
+│ structure   │ Code from     │ Validate         │ code follows              │
+│ + tooling   │ specs         │ against specs    │                           │
+└─────────────┴───────────────┴──────────────────┴───────────────────────────┘
 ```
+
+## Spec Format Decision Tree
+
+Choose the right spec format based on project type:
+
+```
+What are you building?
+│
+├── REST API?
+│   ├── OpenAPI 3.1 (mandatory)
+│   ├── JSON Schema for entities (mandatory)
+│   ├── Gherkin for behavior (recommended)
+│   └── Pact for integrations (if external consumers)
+│
+├── GraphQL API?
+│   ├── GraphQL SDL (mandatory)
+│   ├── JSON Schema for inputs/outputs (recommended)
+│   └── Gherkin for behavior (recommended)
+│
+├── gRPC Service?
+│   ├── Protocol Buffers .proto (mandatory)
+│   └── Gherkin for behavior (recommended)
+│
+├── Event-Driven / Message Queue?
+│   ├── AsyncAPI (mandatory)
+│   ├── JSON Schema for event payloads (mandatory)
+│   └── CloudEvents for envelope (recommended)
+│
+├── Frontend (SPA/SSR)?
+│   ├── OpenAPI for consumed APIs (mandatory)
+│   ├── Component prop types (mandatory)
+│   └── Storybook stories as UI specs (recommended)
+│
+├── Mobile App?
+│   ├── OpenAPI for consumed APIs (mandatory)
+│   ├── Screen flow spec (recommended)
+│   └── Component prop types (recommended)
+│
+└── CLI Tool?
+    ├── Command spec (flags, args, output format) (mandatory)
+    └── Gherkin for behavior (recommended)
+```
+
+## Spec Maturity Model
+
+Assess and improve your project's spec maturity:
+
+| Level | Name | Description | Signs |
+|-------|------|-------------|-------|
+| **L0** | No Specs | Code-first, no formal contracts | No `specs/` directory, ad-hoc API design |
+| **L1** | Partial Specs | Some specs exist but incomplete | OpenAPI for some endpoints, no data schemas |
+| **L2** | Full Specs | All contracts formally specified | Complete OpenAPI, JSON Schemas, behavior specs |
+| **L3** | Conformance Tested | Specs validated by automated tests | Conformance tests in CI, spec linting |
+| **L4** | Spec-Driven Automation | Specs generate code, tests, and docs | Types generated from schemas, API docs auto-published |
+
+**Target**: Level 3 minimum for production projects, Level 4 for long-lived products.
+
+## Phase 0: Spec Audit (Existing Projects)
+
+When joining or onboarding an existing project, audit spec coverage first:
+
+1. **Inventory existing specs**: check for `specs/`, OpenAPI, Swagger, JSON Schema, `.proto`, `.graphql`.
+2. **Map coverage gaps**: which endpoints have no spec? Which entities have no schema?
+3. **Assess maturity level**: use the maturity model above to score the project.
+4. **Create a spec backlog**: prioritize specs for the most critical/unstable parts of the system.
+5. **Write specs retroactively**: start with the most-changed or most-broken components.
+6. **Add conformance tests**: for each retro-spec, add a conformance test before any new implementation.
+
+Rules for Phase 0:
+- Never rewrite existing code to match new specs — write specs that describe current behavior first.
+- Then evolve specs iteratively toward the desired behavior.
+- Phase 0 can run in parallel with normal feature work.
 
 ## Phase 1: Discovery
 
@@ -32,6 +115,7 @@ Write formal specifications BEFORE any code or architecture decision:
 - Define **API contracts** (OpenAPI/Swagger, GraphQL schema, gRPC proto) for every endpoint.
 - Define **UI contracts** (component props, state shapes, event signatures) for every interactive element.
 - Define **integration contracts** (request/response shapes, error codes) for every external dependency.
+- Use templates from `core-spec-templates` rule for consistent format.
 - Specs must be **machine-readable** when possible — they will generate tests and validation.
 - Specs must be **reviewed and approved** before any implementation begins.
 
@@ -40,11 +124,12 @@ Write formal specifications BEFORE any code or architecture decision:
 Design the system architecture driven by the approved specs:
 
 - Choose architecture pattern based on the contracts defined in Phase 2.
-- Map data contracts to database schema and migrations.
+- Map data contracts to database schema and migrations (see `core-migration-strategy` rule).
 - Map API contracts to routes, controllers, and middleware.
 - Map UI contracts to component tree and state management.
 - Document architectural decisions as ADRs, referencing the specs that drove them.
 - Select tech stack based on the contracts' requirements (see `core-tech-stack` rule).
+- Define observability contracts (see `core-observability` rule).
 
 ## Phase 4: Scaffolding
 

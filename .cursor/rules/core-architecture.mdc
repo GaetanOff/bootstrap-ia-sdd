@@ -1,5 +1,5 @@
 ---
-description: Contract-first architecture — design driven by specifications and contracts
+description: Contract-first architecture — design driven by specifications, C4 model, DDD patterns
 alwaysApply: true
 ---
 
@@ -27,6 +27,177 @@ Choose based on the contracts defined in the Specification phase:
 | **Serverless** | Event-driven contracts, async workflows | AsyncAPI specs, event schemas |
 | **Jamstack** | Content-heavy, static + dynamic hybrid | Few API contracts, CDN-friendly |
 | **Event-Driven** | Async workflows, decoupled contracts | Event schemas, pub/sub contracts |
+
+## C4 Architecture Model
+
+Document architecture at four levels of abstraction, driven by specs:
+
+### Level 1: System Context Diagram
+
+Shows the system and its external actors/dependencies. Derived from integration contracts.
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   SYSTEM CONTEXT                     │
+│                                                      │
+│  [User] ──→ [Your System] ──→ [Payment Provider]    │
+│                  │                                    │
+│                  ├──→ [Email Service]                 │
+│                  └──→ [Auth Provider]                 │
+│                                                      │
+│  Sources: specs/contracts/*.pact.json                │
+│           specs/api/openapi.yaml (security schemes)  │
+└─────────────────────────────────────────────────────┘
+```
+
+Rules:
+- Every external dependency must have an integration contract.
+- Every actor must be referenced in behavior specs.
+
+### Level 2: Container Diagram
+
+Shows the major containers (apps, databases, queues). Derived from API specs and data contracts.
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                    CONTAINER DIAGRAM                        │
+│                                                             │
+│  [Web App (Next.js)] ──API──→ [API Server (Node.js)]       │
+│                                     │                       │
+│                              ┌──────┼──────┐                │
+│                              ↓      ↓      ↓                │
+│                          [PostgreSQL] [Redis] [S3]          │
+│                                                             │
+│  [Mobile App] ──API──→ [API Server]                         │
+│                                                             │
+│  Sources: specs/api/openapi.yaml (API boundaries)           │
+│           specs/schemas/ (data store decisions)              │
+│           specs/decisions/ (ADRs)                            │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Level 3: Component Diagram
+
+Shows modules within a container. Derived from feature specs and bounded contexts.
+
+```
+┌──────────────────────────────────────────────────────────┐
+│              API SERVER — COMPONENT DIAGRAM               │
+│                                                           │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────┐           │
+│  │   Auth   │  │  Users   │  │   Orders     │           │
+│  │  Module  │  │  Module  │  │   Module     │           │
+│  └────┬─────┘  └────┬─────┘  └──────┬───────┘           │
+│       │              │               │                    │
+│  ┌────┴──────────────┴───────────────┴────┐              │
+│  │         Shared Infrastructure           │              │
+│  │  (middleware, error handler, logger)     │              │
+│  └─────────────────────────────────────────┘              │
+│                                                           │
+│  Sources: specs/features/ (one module per feature area)   │
+│           specs/schemas/ (shared schemas = shared infra)  │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Level 4: Code Diagram
+
+Shows classes/functions within a component. Derived from data contracts and behavior specs. Use sparingly — code should be self-documenting at this level.
+
+## Domain-Driven Design Patterns (Spec-Driven)
+
+For complex domains, use DDD patterns mapped to specs:
+
+### Bounded Contexts
+
+Each bounded context maps to a separate set of specs:
+
+```
+specs/
+  contexts/
+    identity/               # Auth & user management context
+      api/openapi.yaml
+      schemas/user.schema.json
+      features/auth.feature
+    ordering/               # Order management context
+      api/openapi.yaml
+      schemas/order.schema.json
+      features/checkout.feature
+    shipping/               # Shipping context
+      api/openapi.yaml
+      schemas/shipment.schema.json
+    shared-kernel/          # Shared across contexts
+      schemas/address.schema.json
+      schemas/money.schema.json
+```
+
+Rules:
+- Each bounded context owns its specs — no cross-context `$ref` except shared-kernel.
+- Context boundaries align with team boundaries (Conway's Law).
+- Communication between contexts is via explicit contracts (API, events, shared-kernel).
+
+### Aggregates
+
+Map aggregate roots to data contracts:
+
+- The aggregate root schema is the main entity schema.
+- Child entities within the aggregate are nested in the root schema.
+- Invariants (business rules) are expressed in behavior specs.
+- Each aggregate boundary defines a transaction boundary.
+
+### Domain Events
+
+Map domain events to AsyncAPI specs:
+
+```yaml
+channels:
+  ordering/order-placed:
+    publish:
+      message:
+        payload:
+          type: object
+          required: [orderId, userId, items, total, placedAt]
+          properties:
+            orderId: { type: string, format: uuid }
+            userId: { type: string, format: uuid }
+            items: { type: array }
+            total: { type: number }
+            placedAt: { type: string, format: date-time }
+```
+
+Rules:
+- Every state transition that other contexts care about → domain event.
+- Events are immutable facts — define them as past-tense verbs (`OrderPlaced`, `UserRegistered`).
+- Include all data the consumer needs — consumers should not call back to the producer.
+
+## API Gateway Patterns
+
+When multiple API specs exist (microservices, bounded contexts):
+
+### Aggregation
+
+```yaml
+# Gateway aggregates multiple backend APIs into one consumer-facing API
+gateway:
+  routes:
+    /api/v1/users:
+      upstream: identity-service
+      spec: specs/contexts/identity/api/openapi.yaml
+
+    /api/v1/orders:
+      upstream: ordering-service
+      spec: specs/contexts/ordering/api/openapi.yaml
+
+    /api/v1/shipping:
+      upstream: shipping-service
+      spec: specs/contexts/shipping/api/openapi.yaml
+```
+
+### Gateway Responsibilities (from specs)
+- **Authentication**: validate JWT per the security scheme in OpenAPI spec.
+- **Rate limiting**: enforce limits per the rate limit contract.
+- **Request routing**: map paths to upstream services per API specs.
+- **Response aggregation**: combine responses from multiple specs (BFF pattern).
+- **Protocol translation**: GraphQL → REST, REST → gRPC per contract mappings.
 
 ## Contract-Driven Data Modeling
 
@@ -79,7 +250,7 @@ Choose based on the contracts defined in the Specification phase:
 Plan these upfront as shared spec components:
 - **Error envelope**: standard error response contract used by all endpoints.
 - **Pagination**: shared pagination contract (`page`, `limit`, `total`, `next`).
-- **Logging**: structured log format spec with correlation IDs.
+- **Logging**: structured log format spec with correlation IDs (see `core-observability` rule).
 - **Health checks**: health endpoint contract (`/health`, `/ready`).
 - **Rate limiting**: rate limit headers contract (`X-RateLimit-*`).
 - **Auth headers**: authentication header contract (`Authorization: Bearer <token>`).
@@ -88,9 +259,12 @@ Plan these upfront as shared spec components:
 
 ```
 specs/api/openapi.yaml     → Routes, Controllers, Middleware
+specs/api/schema.graphql   → Resolvers, DataLoaders, Subscriptions
+specs/api/service.proto    → gRPC Services, Message Handlers
 specs/schemas/*.json       → Database Schema, ORM Models, Validation
 specs/contracts/*.pact     → Integration Layer, External Service Clients
 specs/features/*.feature   → Use Cases, Business Logic Services
 specs/ui/*.props.ts        → Component Tree, State Management
+specs/slos/*.yaml          → Monitoring, Alerting, Dashboards
 specs/decisions/*.md       → ADRs, Architecture Documentation
 ```

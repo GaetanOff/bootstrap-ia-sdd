@@ -1,142 +1,150 @@
 ---
-description: AI agent orchestration for SDD — spec-driven prompting, context management, multi-agent patterns
+description: How AI agents should be orchestrated and prompted to follow Spec Driven Development
 alwaysApply: true
 ---
 
-# Agent Orchestration (SDD)
+# Agent Orchestration (Spec-Driven)
 
-## Context Management
+## The Golden Rule for AI Orchesration
 
-- Start every session by reading project specs, architecture docs, and relevant rules.
-- Reference specific spec files (`@specs/api/openapi.yaml`) to ground the AI in contracts.
-- Break large tasks into focused conversations — one spec/contract per chat when possible.
-- Use the Notepad feature to maintain a living spec status tracker across sessions.
+**Never ask an AI to "build a feature" without providing or asking for the specification first.**
 
-## SDD Prompting Patterns
+AI models are eager to please and will immediately write code if asked. In SDD, you must forcefully restrain the AI from generating implementation code until the contracts are defined, reviewed, and approved.
 
-### Spec-First Prompting
+## Multi-Editor Support
+
+This ruleset is designed for any AI-assisted coding environment:
+- **Cursor**: Use `@` to reference spec files in Composer.
+- **Windsurf**: Use `@` to reference specs in cascade.
+- **GitHub Copilot Chat**: Use `#file` to reference specs.
+- **Gemini Code Assist**: Mention spec paths directly in the prompt.
+
+## The Spec-First Prompting Sequence
+
+Break down tasks into sequential prompts. Do not combine these into a single prompt.
+
+### Step 1: Spec Generation (Phase 1 & 2)
+
+**Prompt Template:**
+> I want to build a [Feature Name].
+> First, DO NOT WRITE ANY IMPLEMENTATION CODE.
+> Generate the following specifications based on standard SDD practices:
+> 1. The JSON Schema for the data model in `specs/schemas/`
+> 2. The OpenAPI paths and components in `specs/api/openapi.yaml`
+> 3. A behavior spec (Gherkin) in `specs/features/`
+> Use the templates defined in the `core-spec-templates` rule.
+> Stop and wait for my review after generating these specs.
+
+### Step 2: Conformance Scaffolding (Phase 4)
+
+**Prompt Template:**
+> The specs are approved.
+> DO NOT WRITE THE BUSINESS LOGIC YET.
+> 1. Run the spec generation tools to update TypeScript interfaces.
+> 2. Scaffold the empty route controllers and service functions.
+> 3. Write a conformance/integration test that fails (because the logic isn't there yet), validating against the OpenAPI spec.
+> Wait for me to run the test and confirm it fails correctly.
+
+### Step 3: Implementation (Phase 5)
+
+**Prompt Template:**
+> Now implement the business logic for [Feature Name] in [Target File].
+> You must strictly conform to:
+> - The data schema in `@specs/schemas/feature.schema.json`
+> - The API contract in `@specs/api/openapi.yaml`
+> - The behavior requirements in `@specs/features/feature.feature`
+> Ensure the conformance test we just wrote passes.
+
+## Prompt Library for Common SDD Scenarios
+
+### 1. The Spec Gap Fix
+
+When the code doesn't match reality, update the spec:
+
+> We have a Spec Gap. The external API actually returns a `status: "PENDING"` field that isn't in our spec.
+> 1. Update `@specs/schemas/order.schema.json` to include this field.
+> 2. Run the type generator.
+> 3. Update the implementation in `@src/modules/orders.ts` to handle this new status properly per our error handling rules.
+
+### 2. The ADR Generator
+
+When making an architectural choice:
+
+> We need to decide between [Option A] and [Option B] for [Requirement].
+> Draft an Architecture Decision Record (ADR) using the template in `core-spec-templates`.
+> Analyze the pros/cons of each, explicitly detailing how they impact our existing contracts in `@specs/api/openapi.yaml`.
+
+### 3. The Security Audit
+
+> Perform a security audit on `@src/modules/auth.ts`.
+> Check it strictly against the requirements documented in `@specs/features/auth.feature` and the rules in `global-security`.
+> Do not fix anything yet, just list the conformance gaps.
+
+### 4. The Refactoring Task
+
+> Refactor `@src/modules/legacy.ts` to improve readability and complexity per `global-clean-code`.
+> The code MUST continue to strictly satisfy the contract in `@specs/api/openapi.yaml`. Add/run tests before and after the refactoring to prove conformance.
+
+## Debugging Decision Tree (For AI Agents)
+
+When a test fails or a bug is found, explicitly instruct the AI to follow this triage process:
 
 ```
-❌ "Add authentication"
-
-✅ "Write the authentication specification:
-   - Define the auth API contract in OpenAPI format:
-     - POST /api/v1/auth/login (email + password → JWT token)
-     - POST /api/v1/auth/register (email + password + name → user + JWT)
-   - Define the User data contract (JSON Schema)
-   - Define the error contracts (401, 403, 409, 422)
-   - Define the JWT token contract (payload shape, expiry)
-   - Write behavior specs (Given-When-Then) for:
-     - Successful login
-     - Failed login (wrong password, non-existent user)
-     - Successful registration
-     - Registration with existing email
-   - Place specs in specs/api/ and specs/schemas/"
+Bug reported / Test failed
+│
+├── 1. Check the Spec
+│   ├── Is the expected behavior defined in the spec?
+│   ├── NO → Spec Gap. Stop. Update the spec and ask for review.
+│   └── YES ↓
+│
+├── 2. Check the Conformance Test
+│   ├── Does the test accurately reflect the spec?
+│   ├── NO → Test Bug. Fix the test to match the spec.
+│   └── YES ↓
+│
+└── 3. Check the Implementation
+    └── Code Bug. Fix the application code to satisfy the spec and test.
 ```
 
-### Contract-Then-Code Prompting
+**Prompting this tree:**
+> We have a bug: [description]. Run the SDD Debugging Decision Tree. First, tell me what the spec says about this scenario. If it's missing, write the spec update first.
 
+## Spec Status Tracker (Notepad/Scratchpad Pattern)
+
+When working on a large epic, instruct the AI to maintain a status tracker. If your editor supports a "Notepad" or persistent scratchpad, maintain it there. Otherwise, keep it in an ephemeral `# TASK.md` file.
+
+**Tracker Template:**
+```markdown
+# Epic: [Epic Name]
+
+## 1. Specifications
+- [ ] Data schemas (`specs/schemas/`)
+- [ ] API contracts (`specs/api/`)
+- [ ] Behavior specs (`specs/features/`)
+*(Status: Not Started | Pending Review | Approved)*
+
+## 2. Infrastructure & Tooling
+- [ ] Types generated
+- [ ] DB migrations created
+- [ ] Routes scaffolded
+*(Status: Not Started | In Progress | Done)*
+
+## 3. Conformance Tests
+- [ ] Happy path tests
+- [ ] Error path tests
+*(Status: Not Started | Failing | Passing)*
+
+## 4. Implementation
+- [ ] Data access layer
+- [ ] Business logic
+- [ ] API controllers
+*(Status: Not Started | In Progress | Done)*
 ```
-❌ "Build the user API"
 
-✅ Step 1: "Write the OpenAPI spec for the Users API.
-           Reference the User schema in specs/schemas/user.schema.json.
-           Include all CRUD endpoints with request/response schemas."
+## Agent Behavior Anti-Patterns
 
-   Step 2: "Generate conformance tests from the Users API spec.
-           Tests should validate response shapes, status codes, and error contracts."
-
-   Step 3: "Implement the Users API to pass all conformance tests.
-           Follow the patterns in src/features/auth/."
-
-   Step 4: "Run conformance tests and fix any failures."
-```
-
-### Multi-Step SDD Approach
-
-For complex features, follow this exact sequence:
-
-1. "Write the data contracts for [feature]. Define JSON Schemas for all entities."
-2. "Write the API contract for [feature]. Define OpenAPI spec with all endpoints."
-3. "Write behavior specs for [feature]. Cover happy paths and error paths."
-4. "Generate conformance tests from the specs."
-5. "Implement the data layer to match the data contracts."
-6. "Implement the service layer to match the behavior specs."
-7. "Implement the API layer to pass the conformance tests."
-8. "Build the UI components matching the UI contracts."
-9. "Run all conformance tests. Fix any failures."
-
-## Agent Capabilities for SDD
-
-### Use Agents for Parallel Spec Work
-
-- Launch explore agents to understand existing specs and contracts.
-- Use shell agents to run spec validators and conformance tests.
-- Run multiple independent agents in parallel:
-  - One agent writes data contracts while another writes API contracts.
-  - One agent generates conformance tests while another scaffolds the feature.
-
-### Leverage File References
-
-- Use `@specs/` to reference the spec directory.
-- Use `@specs/api/openapi.yaml` for API contract context.
-- Use `@specs/schemas/` for data contract context.
-- Be selective — reference the specific spec relevant to the current task.
-
-## Quality Control with AI (Spec-Driven)
-
-### Spec Review Protocol
-
-After the AI generates specs, request:
-1. "Review this OpenAPI spec for completeness — are all error codes defined?"
-2. "Check the JSON Schema for missing constraints (required fields, formats, enums)."
-3. "Are the behavior specs covering all edge cases?"
-4. "Is this spec backward compatible with the previous version?"
-
-### Implementation Review Protocol
-
-After the AI generates code, request:
-1. "Does this implementation conform to the spec in `specs/api/openapi.yaml`?"
-2. "Are all error codes from the error contract reachable?"
-3. "Does the data model match the JSON Schema in `specs/schemas/`?"
-4. "Run the conformance tests — do they all pass?"
-
-### Iterative Refinement
-
-- Don't accept the first spec — review, then ask for specific improvements.
-- Ask the AI to explain contract decisions: "Why did you make this field optional?"
-- If the spec is wrong, provide specific feedback: "This error code is missing because..."
-- Use "diff mode" to see exactly what changed in spec updates.
-
-## Session Management
-
-### Starting a New Feature (SDD Flow)
-
-1. Reference the project's existing specs for context.
-2. Ask the AI to write the feature spec (data contracts + API contracts + behavior specs).
-3. Review the spec. Iterate until approved.
-4. Ask the AI to generate conformance tests from the spec.
-5. Ask the AI to implement the feature to pass conformance tests.
-
-### Resuming Work
-
-1. Summarize the current spec status: which specs are approved, which are in progress.
-2. Reference the specific spec files being worked on.
-3. Mention any spec decisions made in previous sessions.
-4. Check conformance test results from the last session.
-
-### Debugging with Specs
-
-1. Share the conformance test failure output.
-2. Reference the spec the test is validating against.
-3. Describe what the implementation returns vs. what the spec expects.
-4. Ask: "Is the spec wrong, or is the implementation wrong?"
-
-## Anti-Patterns
-
-- **Code-First Prompting**: "Build X" without writing the spec first.
-- **Vague Specs**: "Returns user data" instead of a formal JSON Schema.
-- **Spec Skipping**: "Just implement it, we'll spec it later" — spec drift is inevitable.
-- **Blind Acceptance**: not reviewing generated specs — bad specs produce bad code.
-- **Over-Prompting**: asking for the entire spec + implementation in one prompt.
-- **Ignoring Conformance**: not running conformance tests after implementation.
+If the AI exhibits these behaviors, interrupt it:
+- **Jumping to code**: Writing `src/` files before `specs/` files exist.
+- **Hallucinating APIs**: Calling functions or API endpoints that aren't defined in the project's specs.
+- **Ignoring the contract**: Returning a `200 OK` with `{ success: true }` when the OpenAPI spec demands a `201 Created` with the entity payload.
+- **Silent spec changes**: Modifying a schema or OpenAPI file without explicitly explaining the breaking change.

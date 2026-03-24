@@ -1,106 +1,139 @@
 ---
-description: Conformance gates — spec-driven validation checkpoints at every phase
+description: Conformance gates — automated validation that code matches specifications
 alwaysApply: true
 ---
 
-# Conformance Gates
+# Quality Gates (Spec-Driven)
 
-## Pre-Implementation Gate (Spec Readiness)
+## The Conformance Philosophy
 
-Before writing any code for a feature, verify:
+In Spec Driven Development, a quality gate is not just "do the tests pass?" It is **"does the system exactly match the contract?"**
 
-- [ ] Feature spec is written, reviewed, and approved.
-- [ ] Data contracts (JSON Schema / types) are defined and valid.
-- [ ] API contracts (OpenAPI / GraphQL) are defined and lint-free.
-- [ ] Error contracts are defined for all failure modes.
-- [ ] Behavior specs (Given-When-Then) cover happy path and error paths.
-- [ ] Conformance tests are generated from specs.
-- [ ] Architecture decisions are documented as ADRs referencing specs.
-- [ ] Dependencies and blockers are identified.
+A feature is only "done" when it passes all conformance gates. There are no exceptions for "it works on my machine" or "the frontend can handle the differing payload." If it violates the spec, the build fails.
 
-## Spec Conformance Gate (Per Feature)
+## Gate 1: Spec Linting & Validation
 
-After implementing each feature, validate against specs:
+Before any code is considered, the specs themselves must be valid.
 
-### Contract Conformance
-- [ ] API responses match the OpenAPI spec exactly (schema, status codes, headers).
-- [ ] Request validation rejects payloads that don't match the request schema.
-- [ ] Data shapes in the database match the data contracts.
-- [ ] Error responses match the error envelope contract.
-- [ ] UI components accept and emit exactly the contracted props/events.
-- [ ] Integration calls match the consumer-driven contracts (Pact / contract tests).
+### Checks:
+- **OpenAPI**: Is it valid OpenAPI 3.x? Does it have descriptions? Are error codes documented?
+- **JSON Schema**: Is it valid draft-2020-12? Are all `$ref`s resolvable?
+- **GraphQL**: Does the SDL compile? Are all types reachable?
 
-### Behavior Conformance
-- [ ] All Given-When-Then scenarios pass.
-- [ ] Happy path acceptance criteria are met.
-- [ ] Error path acceptance criteria are met.
-- [ ] Edge cases defined in specs are handled.
-- [ ] Error messages match the spec's error code catalog.
+### Tools:
+- `spectral lint specs/api/openapi.yaml` (enforces standards and best practices)
+- `ajv compile -s specs/schemas/**/*.json`
+- `graphql-schema-linter specs/api/schema.graphql`
 
-### Code Quality
-- [ ] Types/interfaces are generated from or aligned with spec schemas.
-- [ ] No linter errors or warnings.
-- [ ] No hardcoded values that should come from spec definitions.
-- [ ] No `TODO` or `FIXME` left without a tracking ticket.
-- [ ] Dead code is removed. No commented-out blocks.
+## Gate 2: Code Generation
 
-### Testing
-- [ ] Conformance tests pass (spec-generated).
-- [ ] Unit tests cover business logic and edge cases beyond specs.
-- [ ] Integration tests verify component interactions match contracts.
-- [ ] Tests are deterministic and isolated.
-- [ ] Code coverage meets project threshold (aim for 80%+ on business logic).
+Generated code (types, interfaces, clients) must build successfully.
 
-### Security Conformance
-- [ ] Authentication matches the spec's security schemes.
-- [ ] Authorization matches the spec's endpoint-level security requirements.
-- [ ] User input is validated against the request schemas.
-- [ ] No secrets in code or configuration files.
-- [ ] SQL injection, XSS, CSRF protections match security specs.
+### Checks:
+- TypeScript compilation of generated types (`tsc --noEmit`).
+- If generation fails, the spec is invalid or incompatible with the generator.
 
-### Performance Conformance
-- [ ] Response times meet the SLOs defined in specs (p50/p95/p99).
-- [ ] Throughput meets the spec's capacity requirements.
-- [ ] No N+1 queries. Database queries are optimized.
-- [ ] API responses are paginated per the pagination contract.
-- [ ] No memory leaks (cleanup in effects, unsubscribe, close connections).
+## Gate 3: Contract Conformance Tests
 
-### Accessibility Conformance (UI)
-- [ ] Semantic HTML matches the UI contract's accessibility requirements.
-- [ ] Interactive elements are keyboard-navigable per spec.
-- [ ] Color contrast meets WCAG AA (4.5:1 minimum).
-- [ ] Screen reader labels are present on all interactive elements.
-- [ ] Focus management is correct for modals and dynamic content.
+This is the most critical gate. The running application is bombarded with requests to verify it adheres to the OpenAPI/GraphQL/gRPC spec.
 
-## Spec Consistency Gate (Cross-Feature)
+### Checks (API Conformance):
+- Does every endpoint return the exact HTTP status codes defined in the spec?
+- Do the response payloads perfectly match the JSON Schemas referenced in the spec (no missing required fields, no extra undocumented fields)?
+- Do the endpoints reject invalid input with the correct error codes according to the spec?
 
-Before integrating features, validate spec consistency:
+### Tools:
+- **Dredd**: Reads OpenAPI and tests the live server.
+- **Portman**: Generates Postman collections and Newman tests from OpenAPI.
+- **Prism**: Validation proxy (can be run in validation mode against a test suite).
+- **Pact**: Contract testing between consumer and provider.
 
-- [ ] No conflicting data contracts between features (same entity, different shapes).
-- [ ] Shared contracts (`$ref`) are used consistently across all API specs.
-- [ ] Error codes are unique and don't collide across features.
-- [ ] Authentication and authorization contracts are consistent.
-- [ ] Pagination and filtering contracts follow the shared spec.
+## Gate 4: Behavior Tests (BDD)
 
-## Pre-Release Gate
+The business logic must satisfy the functional requirements.
 
-Before deploying to production:
+### Checks:
+- Do all Scenarios in the Gherkin `specs/features/` pass?
+- Are edge cases (empty states, boundary values) handled gracefully?
 
-- [ ] All feature conformance gates pass.
-- [ ] All spec consistency gates pass.
-- [ ] E2E tests pass on critical user flows defined in behavior specs.
-- [ ] Performance benchmarks meet SLOs from specs.
-- [ ] Security audit checklist matches security specs.
-- [ ] API documentation is auto-generated from specs and up to date.
-- [ ] Specs are versioned and tagged with the release.
-- [ ] Rollback plan is documented and tested.
-- [ ] Monitoring and alerting are configured for SLO violations.
+### Tools:
+- **Cucumber.js / PyTest-BDD / Godog**: Parse Gherkin and run step definitions.
 
-## Continuous Conformance
+## Gate 5: Security, Performance & Code Quality
 
-- Run spec linters (OpenAPI, JSON Schema) on every commit.
-- Run conformance tests on every push (CI pipeline).
-- Run contract tests on every PR.
-- Run E2E behavior tests before every deployment.
-- Validate spec-to-code drift weekly (automated spec conformance report).
-- Review dependency vulnerabilities weekly.
+These are standard gates, but informed by the specs.
+
+### Checks:
+- **Security**: No hardcoded secrets (TruffleHog), dependencies audited (`npm audit`), SAST tools pass. Ensure auth enforced as per OpenAPI `securitySchemes`.
+- **Performance**: Response times meet the SLOs defined in `specs/slos/*.yaml`. No N+1 query patterns. Wait for CI checks.
+- **Code Quality**: Linter passes (ESLint, Ruff, Golangci-lint). Complexity within limits (`global-clean-code`).
+
+## Metrics & Coverage
+
+### 1. Spec Coverage Metric
+
+Measure how much of your actual runtime surface area is documented in specs.
+
+- Track: Total API routes mapped by the router vs. endpoints defined in OpenAPI.
+- Target: 100%. (Any undocumented route is a security risk and a spec failure).
+
+### 2. Conformance Coverage Metric
+
+Measure how much of your spec is actually tested for conformance.
+
+- Track: Endpoints in OpenAPI vs. Endpoints hit by automated tests returning 200/201.
+- Target: 100% of defined endpoints must have at least one success-path conformance test.
+
+### 3. Business Logic Code Coverage
+
+Standard code coverage metric for implementation.
+
+- Track: Lines/branches of code executed during unit and behavior tests.
+- Target: ≥80% for domain/business logic. (Do not chase 100% on glue code or generated files).
+
+## Automated Gate Scripts
+
+Add these gate checks to your build pipeline.
+
+### `scripts/gate-check.sh` Example:
+
+```bash
+#!/bin/bash
+set -e
+
+echo "🚪 Running Spec Validation (Gate 1)..."
+npm run spec:lint || { echo "❌ Spec linting failed"; exit 1; }
+
+echo "🚪 Running Type Check (Gate 2)..."
+npm run typecheck || { echo "❌ Type checking failed"; exit 1; }
+
+echo "🚪 Running Unit & Behavior Tests (Gate 4)..."
+npm run test:unit || { echo "❌ Unit tests failed"; exit 1; }
+
+echo "🚪 Starting Server for Conformance Testing..."
+npm run start:test-server &
+SERVER_PID=$!
+sleep 5 # Wait for server to boot
+
+echo "🚪 Running Conformance Tests (Gate 3)..."
+npm run test:conformance || {
+  echo "❌ Conformance tests failed! The API does not match the spec."
+  kill $SERVER_PID
+  exit 1
+}
+
+kill $SERVER_PID
+echo "✅ All Quality Gates Passed!"
+```
+
+## The "Spec Fix" Workflow
+
+When a conformance gate fails, you have a Spec Gap. You must explicitly choose one of two paths:
+
+1. **The Code is Wrong**: The spec accurately reflects the requirement, but the implementation is buggy.
+   → *Action: Fix the code, re-run tests.*
+
+2. **The Spec is Wrong (or Outdated)**: The code works correctly for the current business reality, but the spec hasn't been updated.
+   → *Action: DO NOT "hack" the test to pass. Update the OpenAPI/JSON Schema, get it reviewed, run generation, update types, THEN re-run tests.*
+
+**Never change the implementation to appease a bad test if the spec is what needs updating.**

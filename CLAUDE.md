@@ -25,12 +25,28 @@ Never start coding before specs are written and approved. Specs are the single s
 ### Specification Authoring
 
 - Write **data contracts** (JSON Schema) for every entity — required fields, types, formats, enums.
-- Write **API contracts** (OpenAPI 3.x) for every endpoint — request/response schemas, status codes, error codes.
+- Write **API contracts** (OpenAPI 3.1) for every endpoint — request/response schemas, status codes, error codes.
+- Write **GraphQL/gRPC/WebSocket** contracts if applicable to the architecture.
 - Write **behavior specs** (Given-When-Then / Gherkin) for every feature — happy path + error paths.
 - Write **error contracts** — standard error envelope, error code catalog.
 - Write **integration contracts** (Pact) for every external dependency.
+- **Use Spec Templates**: Always start from the standardized templates for OpenAPI, JSON Schema, Gherkin, ADRs, Pact, and AsyncAPI (`core-spec-templates`).
 - Specs must be machine-readable, human-readable, versioned, and reviewed before implementation.
 - Store specs in `specs/` directory: `specs/api/`, `specs/schemas/`, `specs/features/`, `specs/contracts/`, `specs/decisions/`.
+
+### Spec-Driven Observability
+
+- **Structured Logging Contract**: Define standard JSON log shape with correlation (`requestId`) and trace IDs. Never log PII or secrets.
+- **Metrics Contract**: RED method (Request rate, Errors, Duration) for APIs. USE method (Utilization, Saturation, Errors) for resources.
+- **Distributed Tracing**: Define span naming conventions based on specs. Pass W3C Trace Context between services.
+- **SLOs as Code**: Define Service Level Objectives formally in `specs/slos/*.yaml`. Create runbooks for mapped alerts.
+
+### Migration & Versioning Strategy
+
+- **Schema Lifecycle**: Every data contract change produces a versioned, atomic, reversible migration (up/down).
+- **API Versioning**: Default to URL path versioning (`/api/v1/`).
+- **Data Evolution**: Prefer additive non-breaking changes. Deprecate fields with explicit sunset headers before removal.
+- **Compatibility Verification**: Run OpenAPI diff tools in CI to catch unintended breaking changes. Require major version bumps for breaking changes.
 
 ### Spec-Driven Planning
 
@@ -304,6 +320,22 @@ Per feature:
 - Use `List.of()`, `Map.of()`, `Set.of()` for immutable collections. Streams for transformations.
 - Constructor injection (Spring). `@Valid` for input validation. `@RestControllerAdvice` for errors.
 - JUnit 5 + Mockito + AssertJ. `@SpringBootTest` only for integration tests.
+
+### Swift & SwiftUI
+
+- Prefer `struct` (value types) over `class` (reference types) by default.
+- Use optional binding (`if let`, `guard let`) safely; avoid force-unwrapping (`!`).
+- Embrace modern Swift concurrency (`async`/`await`, `Task`). Avoid GCD where possible.
+- In SwiftUI, separate logic from presentation. Use `@StateObject` and `@ObservedObject` correctly.
+- Derive `Codable` models directly from JSON Schema data contracts.
+
+### Kotlin & Android
+
+- Prefer `val` (read-only) over `var` (mutable). Use single-expression functions when appropriate.
+- Embrace null safety; avoid the not-null assertion operator (`!!`).
+- Use `sealed class` or `sealed interface` for exhaustive UI state modeling.
+- Use Coroutines (`suspend`) for async operations, and `StateFlow`/`SharedFlow` for streams.
+- Use Jetpack Compose for declarative UI. Hoist state up and follow Unidirectional Data Flow (UDF).
 
 ### Dart & Flutter
 

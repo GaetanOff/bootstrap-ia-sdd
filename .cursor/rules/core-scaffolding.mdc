@@ -1,182 +1,216 @@
 ---
-description: Spec-driven scaffolding — project structure with specs directory, contract tooling, conformance setup
+description: Spec-driven project scaffolding — directory structures, spec tooling, CI/CD configuration
 alwaysApply: true
 ---
 
-# Spec-Driven Scaffolding
+# Scaffolding (Spec-Driven)
 
-## Directory Structure
+## The `specs/` Directory
 
-Generate a feature-based structure with a **specs directory** at the root:
+Every project, regardless of the tech stack, must have a `specs/` directory at the root. This is the single source of truth for the project.
 
-### Web App (React/Next.js/Vue)
-
+```text
+my-project/
+├── specs/                   # The single source of truth
+│   ├── api/                 # OpenAPI, GraphQL, gRPC specs
+│   ├── schemas/             # JSON Schema data contracts
+│   ├── features/            # Gherkin behavior specs
+│   ├── contracts/           # Pact provider/consumer contracts
+│   ├── ui/                  # Component prop contracts
+│   ├── slos/                # Performance/reliability specs
+│   └── decisions/           # Architecture Decision Records (ADRs)
+├── src/                     # Implementation
+├── tests/                   # Conformance and unit tests
+├── .cursor/rules/           # AI behavior rules
+├── package.json
+└── README.md
 ```
-specs/                            # Single source of truth
-  api/
-    openapi.yaml                  # REST API specification
-  schemas/
-    user.schema.json              # Data contracts
-    shared/
-      error.schema.json
-      pagination.schema.json
-  features/
-    auth.feature                  # Behavior specifications
-  ui/
-    button.props.ts               # UI component contracts
-  decisions/
-    001-tech-stack.md             # ADRs
+
+## Spec Validation Tooling
+
+When scaffolding a new project, immediately set up tooling to validate the specs themselves.
+
+### Node.js / JavaScript Scaffolding
+
+Add these to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "spec:lint": "spectral lint specs/api/*.yaml",
+    "spec:validate": "ajv validate -s specs/schemas/**/*.json -d specs/schemas/**/*.json",
+    "spec:generate:types": "openapi-typescript specs/api/openapi.yaml -o src/types/api.ts",
+    "spec:test": "prism mock specs/api/openapi.yaml",
+    "test:conformance": "dredd specs/api/openapi.yaml http://localhost:3000",
+    "pre-commit": "npm run spec:lint && npm run spec:validate"
+  },
+  "devDependencies": {
+    "@stoplight/spectral-cli": "^6.0.0",
+    "ajv-cli": "^5.0.0",
+    "openapi-typescript": "^6.0.0",
+    "@stoplight/prism-cli": "^4.0.0",
+    "dredd": "^14.0.0"
+  }
+}
+```
+
+## Architectural Scaffolding Templates
+
+### 1. API Backend (Node/Python/Go)
+
+Organize by feature (vertical slices), not by layer:
+
+```text
 src/
-  app/                            # Routes and pages
-  features/                       # Feature modules
-    auth/
-      components/
-      hooks/
-      services/
-      types.ts                    # Generated from specs/schemas/
-      index.ts
-    dashboard/
-      ...
-  shared/
-    components/                   # Reusable UI components
-    hooks/                        # Shared hooks
-    lib/                          # Utility functions
-    types/                        # Shared types (generated from specs)
-  infrastructure/
-    api/                          # API client (generated from OpenAPI)
-    config/                       # App configuration
-    providers/                    # Context providers
-public/                           # Static assets
-tests/
-  conformance/                    # Spec conformance tests
-  e2e/                            # E2E tests from behavior specs
+├── app.ts                 # App entrypoint (wires up modules)
+├── server.ts              # HTTP server (binds ports)
+├── lib/                   # Shared utilities (logger, db connection)
+│   ├── logger.ts
+│   └── db.ts
+└── modules/               # Feature modules
+    ├── auth/              # Auth module (implements specs/api/openapi.yaml#/paths/~1auth)
+    │   ├── api.ts         # Route handlers (must conform to OpenAPI)
+    │   ├── service.ts     # Business logic (must pass Gherkin specs)
+    │   ├── repository.ts  # Data access (must conform to JSON schema)
+    │   └── tests/         # Module-specific tests
+    └── users/
+        ├── api.ts
+        ├── service.ts
+        └── repository.ts
 ```
 
-### Backend API (Node.js/Python/Go)
+### 2. Frontend Web App (React/Vue/Next.js)
 
-```
-specs/                            # Single source of truth
-  api/
-    openapi.yaml
-  schemas/
-    user.schema.json
-    order.schema.json
-    shared/
-      error.schema.json
-      pagination.schema.json
-  contracts/
-    payment-api.pact.json         # Integration contracts
-  features/
-    auth.feature
-    checkout.feature
-  decisions/
-    001-database-choice.md
+```text
 src/
-  features/                       # Feature modules
-    users/
-      controller.ts
-      service.ts
-      repository.ts
-      schema.ts                   # Derived from specs/schemas/
-      routes.ts                   # Derived from specs/api/
-      __tests__/
-        conformance/              # Spec conformance tests
-        unit/
-    orders/
-      ...
-  shared/
-    middleware/                    # Express/Fastify middleware
-    errors/                       # Error classes matching error contract
-    utils/                        # Utility functions
-    types/                        # Types generated from specs
-  infrastructure/
-    database/                     # DB connection, migrations
-    cache/                        # Cache layer
-    config/                       # Environment config
-    logger/                       # Structured logging
+├── app/                   # Routing (Next.js/Nuxt) or Pages (React/Vue)
+├── components/            # UI Components
+│   ├── shared/            # Generic components (Button, Input)
+│   └── domain/            # Domain-specific (UserCard, CheckoutForm)
+├── lib/                   # Shared utilities
+│   ├── api-client.generated.ts # GENERATED from OpenAPI
+│   └── query-client.ts    # React Query / SWR setup
+├── types/                 # Type definitions
+│   └── api.generated.ts   # GENERATED from JSON Schemas
+└── features/              # Complex logic grouped by feature
+    └── checkout/
+        ├── hooks.ts
+        └── state.ts
 ```
 
-### Fullstack (Monorepo)
+### 3. Mobile App (React Native / Flutter)
 
+```text
+src/
+├── app/                   # Navigation/Routing
+├── screens/               # Screen components
+│   ├── auth/
+│   └── profile/
+├── components/            # Reusable UI elements
+├── core/                  # Core services
+│   ├── api.generated.ts   # GENERATED from OpenAPI
+│   ├── auth.service.ts
+│   └── storage.ts
+├── models/                # Domain models
+│   └── entities.gen.ts    # GENERATED from JSON Schemas
+└── store/                 # State management
 ```
-specs/                            # Shared specs across apps
-  api/
-  schemas/
-  contracts/
-  features/
-  decisions/
-apps/
-  web/                            # Frontend app
-  api/                            # Backend app
-  mobile/                         # Mobile app (optional)
-packages/
-  shared/                         # Shared types (generated from specs)
-  ui/                             # Shared component library
-  config/                         # Shared configurations
+
+### 4. CLI Tool (Go / Rust / Node)
+
+```text
+src/
+├── cmd/                   # Command definitions (CLI entrypoints)
+│   ├── root.ts
+│   ├── get.ts
+│   └── apply.ts
+├── internal/              # Private business logic
+│   ├── config/            # Config parsing & validation
+│   └── executor/          # Core execution logic
+├── pkg/                   # Public APIs (if any)
+└── api/                   # API clients (if it talks to servers)
+    └── client.generated.ts # GENERATED from OpenAPI
 ```
 
-## Tooling Setup Checklist
+## CI/CD Pipeline Scaffolding
 
-For every project, set up:
+Every spec-driven project must have a CI pipeline configured at scaffolding time.
 
-- [ ] **Package manager**: npm/pnpm/yarn (JS), uv/poetry (Python), go mod (Go).
-- [ ] **Linter**: ESLint (JS/TS), Ruff (Python), golangci-lint (Go), clippy (Rust).
-- [ ] **Formatter**: Prettier (JS/TS), Black/Ruff (Python), gofmt (Go), rustfmt (Rust).
-- [ ] **Type checker**: TypeScript strict mode, mypy/pyright (Python).
-- [ ] **Test runner**: Vitest/Jest (JS), pytest (Python), go test (Go), cargo test (Rust).
-- [ ] **Spec linter**: `spectral` (OpenAPI), `ajv` (JSON Schema), `asyncapi-cli` (AsyncAPI).
-- [ ] **Conformance tester**: `dredd`/`prism`/`schemathesis` (API), `pact` (contracts).
-- [ ] **Code generator**: `openapi-generator`/`orval` (types from specs).
-- [ ] **Git hooks**: Husky + lint-staged (JS), pre-commit (Python) — include spec linting.
-- [ ] **Environment**: `.env.example` with all variables documented.
-- [ ] **Editor config**: `.editorconfig` for consistent formatting across editors.
+### GitHub Actions Template (`.github/workflows/ci.yml`)
 
-## Configuration Files
+```yaml
+name: CI (Spec-Driven)
 
-Generate appropriate config files for the chosen stack:
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-### JavaScript/TypeScript
-- `package.json` with scripts: dev, build, test, lint, format, `spec:lint`, `spec:test`, `spec:generate`.
-- `tsconfig.json` with strict mode enabled.
-- `.eslintrc` or `eslint.config.js` with recommended rules.
-- `.prettierrc` with consistent settings.
-- `.spectral.yaml` for OpenAPI linting rules.
+jobs:
+  validate-specs:
+    name: 1. Validate Specs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - name: Lint OpenAPI
+        run: npm run spec:lint
+      - name: Validate JSON Schemas
+        run: npm run spec:validate
+      - name: Check for breaking spec changes
+        run: npx oasdiff breaking specs/api/openapi-main.yaml specs/api/openapi.yaml || echo "Warning: breaking changes detected"
 
-### Python
-- `pyproject.toml` with all tool configuration.
-- `requirements.txt` or `uv.lock` for pinned dependencies.
-- `schemathesis` config for API conformance testing.
+  type-check:
+    name: 2. Type Check (Contract Validation)
+    needs: validate-specs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - name: Generate types from spec
+        run: npm run spec:generate:types
+      - name: TypeScript Check
+        run: npx tsc --noEmit
 
-### Go
-- `go.mod` with module path.
-- `Makefile` with build, test, lint, `spec-lint`, `spec-test` targets.
-
-### Rust
-- `Cargo.toml` with workspace configuration.
-- `clippy.toml` for custom lint rules.
-
-## Initial Files
-
-Create these files at project setup:
-- `README.md` — project purpose, setup instructions, spec overview.
-- `.gitignore` — stack-appropriate ignore patterns.
-- `.env.example` — all environment variables with descriptions.
-- `specs/api/openapi.yaml` — initial API spec skeleton.
-- `specs/schemas/shared/error.schema.json` — standard error envelope contract.
-- `specs/schemas/shared/pagination.schema.json` — standard pagination contract.
-- `specs/decisions/001-tech-stack.md` — first ADR: technology selection.
-- `Dockerfile` — if containerization is needed.
-- `docker-compose.yml` — for local development with services (DB, cache, etc.).
+  test:
+    name: 3. Tests & Conformance
+    needs: type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - name: Run Unit Tests
+        run: npm run test:unit
+      - name: Start Server
+        run: npm run start & sleep 5
+      - name: Run Spec Conformance Tests
+        run: npm run test:conformance
+```
 
 ## First Commit Checklist
 
-The first commit should include:
-- [ ] Project structure created with `specs/` directory.
-- [ ] Initial spec skeleton (OpenAPI, shared schemas, error contract).
-- [ ] Spec linting configured and passing.
-- [ ] All configuration files in place.
-- [ ] Dependencies installed and lockfile committed.
-- [ ] Linter and formatter running without errors.
-- [ ] At least one conformance test skeleton passing.
-- [ ] README with setup instructions and spec overview.
-- [ ] CI pipeline configuration (including spec validation step).
+Before starting implementation, the first commit ("chore: initial spec-driven scaffolding") must include:
+
+- [ ] `specs/` directory created with initial templates (OpenAPI skeleton, error schema).
+- [ ] `README.md` updated with project description and spec overview.
+- [ ] Package manager initialized (`package.json`, `go.mod`, `Cargo.toml`).
+- [ ] Spec validation tools configured and working (`spectral`, `ajv`).
+- [ ] Code generation tools configured (`openapi-typescript`, `openapi-generator`).
+- [ ] Linter, formatter, and type-checker configured.
+- [ ] CI pipeline file created.
+- [ ] `.gitignore` configured.
+- [ ] `.env.example` created.
+
+## Rules for Code Generation
+
+In a Spec Driven Development workflow, code generation bridges the gap between specs and implementation.
+
+- **Types/Interfaces**: ALWAYS generate them from JSON Schema or OpenAPI. Never write them by hand.
+- **API Clients**: Generates client SDKs or React Query hooks from OpenAPI using tools like `openapi-typescript-codegen` or `orval`.
+- **API Route Stubs**: Optional, but strongly recommended to enforce route signatures.
+- **Do not modify generated files**: Output them to `.generated.ts` or a `__generated__` folder and add them to `.gitignore`.
+- **Run generation on pre-commit**: Ensure the codebase always matches the latest specs.

@@ -100,8 +100,10 @@ These rules define HOW the AI approaches spec-driven project creation.
 | Rule | Description |
 |------|-------------|
 | `core-workflow` | Master SDD workflow: discovery → specification → contract design → scaffold → implement → conform → iterate |
+| **`core-spec-templates`** | **[NEW]** Ready-to-use templates for OpenAPI, JSON Schema, Pact, Gherkin |
 | `core-planning` | Spec-driven planning: requirements as specifications, contracts as acceptance criteria |
-| `core-specification` | **NEW** — Spec authoring: how to write, structure, and manage specifications |
+| `core-specification` | Spec authoring: how to write, structure, and manage specifications |
+| **`core-migration-strategy`**| **[NEW]** Schema migrations, API versioning, breaking changes |
 | `core-architecture` | Contract-first architecture: design driven by specifications and contracts |
 | `core-scaffolding` | Spec-driven scaffolding: project structure with specs directory and conformance tooling |
 | `core-implementation` | Spec-first implementation: code derived from specifications, conformance over creativity |
@@ -109,6 +111,7 @@ These rules define HOW the AI approaches spec-driven project creation.
 | `core-iteration` | Spec-driven iteration: specs evolve first, code follows |
 | `core-agent-orchestration` | SDD agent patterns: spec-first prompting, contract-then-code workflow |
 | `core-devops` | CI/CD pipelines with spec validation, deployment strategies, monitoring |
+| **`core-observability`** | **[NEW]** SLOs, distributed tracing, structured logging |
 | `core-tech-stack` | Technology selection framework, stack recommendations by project type |
 | `core-ux-design` | UX/UI design principles, forms, loading states, accessibility, responsive design |
 
@@ -148,6 +151,8 @@ Activated automatically when working with matching file types.
 | `specific-vue` | `**/*.vue, **/*.ts` | Composition API, Pinia, performance |
 | `specific-csharp` | `**/*.cs` | .NET patterns, async, LINQ, nullable, DI |
 | `specific-java` | `**/*.java` | Modern Java 17+, Spring, Optional, streams |
+| `specific-swift` | `**/*.swift` | **[NEW]** Swift / SwiftUI, value types, Combine, async/await |
+| `specific-kotlin` | `**/*.kt, **/*.kts`| **[NEW]** Kotlin / Android, Coroutines, Flow, Jetpack Compose |
 | `specific-dart` | `**/*.dart` | Dart 3 / Flutter, null safety, state management |
 | `specific-c` | `**/*.c, **/*.h` | Memory safety, defensive programming, portability |
 | `specific-cpp` | `**/*.cpp, **/*.hpp, **/*.cc` | RAII, smart pointers, modern C++17/20/23 |
