@@ -1,24 +1,82 @@
-# Bootstrap IA — Spec Driven Development for AI-Powered Project Generation
+# Bootstrap IA — SDD 🚀
 
-A comprehensive ruleset and workflow system that transforms Cursor into a **Spec Driven Development (SDD)** engine. Specifications are the single source of truth — they drive architecture, implementation, tests, and documentation.
+🛠️ **A Spec Driven Development ruleset that transforms Cursor into a specification-first project generation engine. Specs are the single source of truth.**
 
-## What is Bootstrap IA?
+## 📌 Features
 
-Bootstrap IA combines three layers of intelligence with a spec-first methodology:
+✅ Structured SDD methodology: specifications drive everything (planning, architecture, implementation, testing, documentation)
+✅ Formal specs before any code (OpenAPI, JSON Schema, Gherkin)
+✅ Architecture designed from contracts, not assumptions
+✅ Conformance tests generated from specs before implementation
+✅ Features that conform to specifications
+✅ Spec conformance gates at every step
+✅ Specs evolve first when requirements change, then code follows
+✅ Best practices for 18+ programming languages and frameworks
 
-1. **Core SDD Rules** — A structured methodology where specifications drive everything: planning, architecture, implementation, testing, and documentation.
-2. **Global Quality Rules** — Universal coding standards that apply to every project regardless of tech stack.
-3. **Technology-Specific Rules** — Best practices for 18+ programming languages and frameworks.
+## 🔌 Compatibility
 
-When you drop these rules into a project, Cursor becomes a senior engineer that:
-- Writes formal specifications before any code (OpenAPI, JSON Schema, Gherkin).
-- Designs architecture driven by contracts, not assumptions.
-- Generates conformance tests from specs before implementation.
-- Implements features that conform to specifications.
-- Validates quality through spec conformance gates at every step.
-- Evolves specs first when requirements change, then propagates to code.
+| Tool | File | Format |
+|------|------|--------|
+| **Cursor** | `.cursor/rules/*.mdc` | MDC with YAML frontmatter |
+| **Claude Code** | `CLAUDE.md` | Markdown (project root) |
+| **OpenCode / Agents** | `AGENTS.md` | Markdown (project root) |
 
-## What is Spec Driven Development?
+## 📦 Installation
+
+### 1️⃣ Clone the project
+
+```bash
+git clone https://github.com/GaetanOff/bootstrap-ia-sdd.git
+cd bootstrap-ia-sdd
+```
+
+### 2️⃣ Copy to your project — Full Bootstrap
+
+```bash
+# Copy all rules to your project
+cp -r bootstrap-IA/.cursor/ /path/to/your-project/.cursor/
+
+# Copy agent entrypoints
+cp bootstrap-IA/AGENTS.md /path/to/your-project/
+cp bootstrap-IA/CLAUDE.md /path/to/your-project/
+```
+
+### 3️⃣ Cherry-Picking Rules
+
+Copy only the rules you need:
+
+```bash
+# Core SDD workflow rules only
+cp bootstrap-IA/.cursor/rules/core-*.mdc /path/to/your-project/.cursor/rules/
+
+# Global quality rules only
+cp bootstrap-IA/.cursor/rules/global-*.mdc /path/to/your-project/.cursor/rules/
+
+# Specific tech rules (pick what you need)
+cp bootstrap-IA/.cursor/rules/specific-typescript.mdc /path/to/your-project/.cursor/rules/
+cp bootstrap-IA/.cursor/rules/specific-react.mdc /path/to/your-project/.cursor/rules/
+```
+
+## ⚙️ Configuration
+
+Each `.mdc` rule file has YAML frontmatter you can modify:
+
+```yaml
+---
+description: What this rule does
+globs: "**/*.ts"       # File pattern (specific rules only)
+alwaysApply: false     # Set to true to always apply
+---
+```
+
+### Adjusting the Workflow
+
+- **Lighter SDD**: Remove `core-devops.mdc` and `core-quality-gates.mdc` for smaller projects.
+- **Backend only**: Remove `core-ux-design.mdc` and frontend-specific rules.
+- **Different stack**: Edit `core-tech-stack.mdc` with your preferred technologies.
+- **Minimal specs**: Use only OpenAPI + JSON Schema, skip Gherkin behavior specs.
+
+## 📜 What is Spec Driven Development?
 
 SDD is a methodology where **specifications are the single source of truth**:
 
@@ -34,15 +92,7 @@ Discovery → Specification → Contract Design → Scaffolding → Spec-First I
 | **Living Documentation** | Specs ARE the documentation — auto-generated, never stale |
 | **Spec Evolution** | When requirements change, update the spec first, then propagate to code |
 
-## Compatibility
-
-| Tool | File | Format |
-|------|------|--------|
-| **Cursor** | `.cursor/rules/*.mdc` | MDC with YAML frontmatter |
-| **Claude Code** | `CLAUDE.md` | Markdown (project root) |
-| **OpenCode / Agents** | `AGENTS.md` | Markdown (project root) |
-
-## Rules Overview
+## 📜 Rules Overview
 
 ### Core Rules (SDD Workflow & Project Generation)
 
@@ -105,50 +155,24 @@ Activated automatically when working with matching file types.
 | `specific-api-rest` | `**/api/**, **/routes/**` | URL design, HTTP methods, response format |
 | `specific-markdown` | `**/*.md` | Markdown layout, headings, links |
 
-## Usage
+## 🚀 Usage
 
-### Quick Start — Full Bootstrap
-
-Copy the entire ruleset into your project:
-
-```bash
-git clone https://github.com/YOUR_USERNAME/bootstrap-IA.git
-
-cp -r bootstrap-IA/.cursor/ /path/to/your-project/.cursor/
-
-cp bootstrap-IA/AGENTS.md /path/to/your-project/
-cp bootstrap-IA/CLAUDE.md /path/to/your-project/
-```
-
-### Cherry-Picking Rules
-
-Copy only the rules you need:
-
-```bash
-cp bootstrap-IA/.cursor/rules/core-*.mdc /path/to/your-project/.cursor/rules/
-
-cp bootstrap-IA/.cursor/rules/global-*.mdc /path/to/your-project/.cursor/rules/
-
-cp bootstrap-IA/.cursor/rules/specific-typescript.mdc /path/to/your-project/.cursor/rules/
-cp bootstrap-IA/.cursor/rules/specific-react.mdc /path/to/your-project/.cursor/rules/
-```
-
-### Using with Cursor
+### 1️⃣ Using with Cursor
 
 1. Copy the rules into your project's `.cursor/rules/` directory.
 2. Open the project in Cursor.
 3. Start a conversation — the AI will automatically follow the SDD workflow.
 4. For new projects, begin with: *"I want to build [description]. Let's start with discovery and specification."*
 
-### Using with Claude Code
+### 2️⃣ Using with Claude Code
 
 Place `CLAUDE.md` at your project root. Claude Code reads it automatically.
 
-### Using with OpenCode / Other Agents
+### 3️⃣ Using with OpenCode / Other Agents
 
 Place `AGENTS.md` at your project root.
 
-## SDD Workflow Example
+## 💡 SDD Workflow Example
 
 Here's how Bootstrap IA transforms a typical conversation:
 
@@ -165,54 +189,53 @@ Here's how Bootstrap IA transforms a typical conversation:
 > 6. **Conformance Gates**: Validates all contracts hold, all scenarios pass.
 > 7. **Iteration**: Evolves specs first when requirements change, then updates code.
 
-## Customization
-
-Each `.mdc` rule file has YAML frontmatter you can modify:
-
-```yaml
----
-description: What this rule does
-globs: "**/*.ts"
-alwaysApply: false
----
-```
-
-### Adjusting the Workflow
-
-- **Lighter SDD**: Remove `core-devops.mdc` and `core-quality-gates.mdc` for smaller projects.
-- **Backend only**: Remove `core-ux-design.mdc` and frontend-specific rules.
-- **Different stack**: Edit `core-tech-stack.mdc` with your preferred technologies.
-- **Minimal specs**: Use only OpenAPI + JSON Schema, skip Gherkin behavior specs.
-
-## File Structure
+## 📂 Project structure
 
 ```
 bootstrap-IA/
-├── README.md
-├── AGENTS.md
-├── CLAUDE.md
+├── README.md                    # 📖 Documentation
+├── AGENTS.md                    # 🤖 Entrypoint for OpenCode / agents
+├── CLAUDE.md                    # 🧠 Entrypoint for Claude Code
 ├── .gitignore
 └── .cursor/
     └── rules/
-        ├── core-workflow.mdc            # Master SDD workflow
-        ├── core-planning.mdc            # Spec-driven planning
-        ├── core-specification.mdc       # Spec authoring (NEW)
-        ├── core-architecture.mdc        # Contract-first architecture
-        ├── core-scaffolding.mdc         # Spec-driven scaffolding
-        ├── core-implementation.mdc      # Spec-first implementation
-        ├── core-quality-gates.mdc       # Conformance gates
-        ├── core-iteration.mdc           # Spec-driven iteration
-        ├── core-agent-orchestration.mdc # SDD agent patterns
-        ├── core-devops.mdc              # CI/CD & infrastructure
-        ├── core-tech-stack.mdc          # Technology selection
-        ├── core-ux-design.mdc           # UX/UI design
-        ├── global-*.mdc                 # 10 global quality rules
-        └── specific-*.mdc              # 18 tech-specific rules
+        ├── core-workflow.mdc            # 🔄 Master SDD workflow
+        ├── core-planning.mdc            # 📋 Spec-driven planning
+        ├── core-specification.mdc       # 📝 Spec authoring (NEW)
+        ├── core-architecture.mdc        # 🏗️ Contract-first architecture
+        ├── core-scaffolding.mdc         # 🏭 Spec-driven scaffolding
+        ├── core-implementation.mdc      # ⚡ Spec-first implementation
+        ├── core-quality-gates.mdc       # ✅ Conformance gates
+        ├── core-iteration.mdc           # 🔁 Spec-driven iteration
+        ├── core-agent-orchestration.mdc # 🤖 SDD agent patterns
+        ├── core-devops.mdc              # 🚀 CI/CD & infrastructure
+        ├── core-tech-stack.mdc          # 🛠️ Technology selection
+        ├── core-ux-design.mdc           # 🎨 UX/UI design
+        ├── global-*.mdc                 # 🌍 10 global quality rules
+        └── specific-*.mdc              # 🔧 18 tech-specific rules
 ```
 
-## Contributing
+## 📝 License
+
+All the code is licensed under GPL v3.
+Feel free to modify and improve it! 😃
+
+## 🙌 Contributing
 
 1. Fork the repository.
 2. Create a feature branch: `feat/add-xyz-rule`.
 3. Add or modify rules following the existing format.
 4. Submit a PR with a description of the changes.
+
+💡 Ideas, suggestions, or bugs?
+Open an issue or submit a pull request!
+
+## 📬 Contact
+
+📧 contact@gaetandev.fr
+🌍 [Website](https://gaetandev.fr)
+💬 Discord: GaetanDev
+
+## 🎉 Thank you for using Bootstrap IA — SDD!
+
+If you have any questions or suggestions, let me know! 🚀😃
