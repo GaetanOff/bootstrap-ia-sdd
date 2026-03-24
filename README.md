@@ -4,14 +4,14 @@
 
 ## 📌 Features
 
-✅ Structured SDD methodology: specifications drive everything (planning, architecture, implementation, testing, documentation)
-✅ Formal specs before any code (OpenAPI, JSON Schema, Gherkin)
-✅ Architecture designed from contracts, not assumptions
-✅ Conformance tests generated from specs before implementation
-✅ Features that conform to specifications
-✅ Spec conformance gates at every step
-✅ Specs evolve first when requirements change, then code follows
-✅ Best practices for 18+ programming languages and frameworks
+- ✅ Structured SDD methodology: specifications drive everything (planning, architecture, implementation, testing, documentation)
+- ✅ Formal specs before any code (OpenAPI, JSON Schema, Gherkin)
+- ✅ Architecture designed from contracts, not assumptions
+- ✅ Conformance tests generated from specs before implementation
+- ✅ Features that conform to specifications
+- ✅ Spec conformance gates at every step
+- ✅ Specs evolve first when requirements change, then code follows
+- ✅ Best practices for 18+ programming languages and frameworks
 
 ## 🔌 Compatibility
 
