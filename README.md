@@ -4,14 +4,13 @@
 
 ## 📌 Features
 
-- ✅ Structured SDD methodology: specifications drive everything (planning, architecture, implementation, testing, documentation)
-- ✅ Formal specs before any code (OpenAPI, JSON Schema, Gherkin)
-- ✅ Architecture designed from contracts, not assumptions
-- ✅ Conformance tests generated from specs before implementation
-- ✅ Features that conform to specifications
-- ✅ Spec conformance gates at every step
-- ✅ Specs evolve first when requirements change, then code follows
-- ✅ Best practices for 18+ programming languages and frameworks
+✅ **Spec Driven Development methodology** (specifications drive planning, architecture, implementation, testing, documentation)  
+✅ **Formal specs before any code** (OpenAPI, JSON Schema, Gherkin)  
+✅ **Contract-first architecture** (design driven by specs, not assumptions)  
+✅ **Conformance tests from specs** (generated before implementation)  
+✅ **Spec conformance gates** at every step  
+✅ **Spec-first iteration** (specs evolve first, then code follows)  
+✅ **18+ language/framework support** (TypeScript, React, Next.js, Python, Rust, Go, C#, Java, and more)  
 
 ## 🔌 Compatibility
 
